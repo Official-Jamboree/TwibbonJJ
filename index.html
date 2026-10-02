@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twibbon Generator | JOTA-JOTI 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --accent: #7c3aed;
+      --accent-dark: #5b21b6;
+      --accent-light: #a855f7;
+      --gold: #d4af37;
+      --success: #10b981;
+      --text-primary: #1a0f2e;
+      --text-secondary: #6b5b8a;
+      --text-tertiary: #a89bc4;
+      --border: rgba(124, 58, 237, 0.1);
+      --shadow-sm: 0 2px 8px rgba(124, 58, 237, 0.06);
+      --shadow-md: 0 8px 24px rgba(124, 58, 237, 0.08);
+      --shadow-lg: 0 20px 60px rgba(124, 58, 237, 0.12);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(180deg, #ffffff 0%, #faf8ff 50%, #f5f0ff 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: -0.01em;
+    }
+
+    .bg-deco {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.06) 0%, transparent 40%),
+        radial-gradient(ellipse at 80% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 45%);
+      pointer-events: none;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 30px 24px 60px;
+    }
+
+    /* HEADER */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .header .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 16px 40px rgba(124, 58, 237, 0.3);
+    }
+    .header .logo i {
+      font-size: 2rem;
+      color: #fff;
+    }
+    .header h1 {
+      font-size: 2.6rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--text-primary) 20%, var(--accent) 60%, var(--gold));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 10px;
+    }
+    .header p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* STEPS */
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      transition: all 0.3s;
+    }
+    .step-item.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(124, 58, 237, 0.05);
+      box-shadow: 0 8px 20px rgba(124, 58, 237, 0.1);
+    }
+    .step-item.done {
+      border-color: var(--success);
+      color: var(--success);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .step-item .num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: currentColor;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    /* CARD */
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(24px);
+      border-radius: 28px;
+      padding: 40px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+    }
+
+    /* UPLOAD AREA */
+    .upload-area {
+      border: 2.5px dashed var(--border);
+      border-radius: 20px;
+      padding: 50px 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: rgba(124, 58, 237, 0.02);
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: var(--accent);
+      background: rgba(124, 58, 237, 0.06);
+      transform: translateY(-2px);
+    }
+    .upload-area .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(168, 85, 247, 0.05));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .upload-area .icon i {
+      font-size: 2rem;
+      color: var(--accent);
+    }
+    .upload-area h3 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .upload-area p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    .upload-area .btn-upload {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(124, 58, 237, 0.3);
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    .upload-area .btn-upload:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px rgba(124, 58, 237, 0.4);
+    }
+
+    /* CANVAS PREVIEW */
+    .preview-section {
+      display: none;
+    }
+    .preview-section.active {
+      display: block;
+    }
+
+    .canvas-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+    .canvas-container {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      max-width: 100%;
+      background: #f0f0f5;
+      background-image:
+        linear-gradient(45deg, #e5e5ee 25%, transparent 25%),
+        linear-gradient(-45deg, #e5e5ee 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e5e5ee 75%),
+        linear-gradient(-45deg, transparent 75%, #e5e5ee 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      line-height: 0;
+    }
+    #canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      cursor: grab;
+      touch-action: none;
+    }
+    #canvas:active { cursor: grabbing; }
+
+    /* INSTRUCTION BOX */
+    .instruction-box {
+      background: rgba(124, 58, 237, 0.06);
+      border: 1px solid rgba(124, 58, 237, 0.15);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .instruction-box i {
+      color: var(--accent);
+      font-size: 1.1rem;
+      margin-top: 2px;
+    }
+    .instruction-box strong { color: var(--text-primary); }
+
+    /* CONTROLS */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 700px) {
+      .controls { grid-template-columns: 1fr; }
+    }
+    .control-group {
+      background: rgba(124, 58, 237, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .control-group .label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+    .control-group .label i {
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    .control-group input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 6px;
+      background: rgba(124, 58, 237, 0.15);
+      outline: none;
+      margin-bottom: 8px;
+    }
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+      border: 3px solid #fff;
+    }
+    .control-group input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+      border: 3px solid #fff;
+    }
+    .control-group .value-display {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* ACTION BUTTONS */
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 34px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+      font-family: inherit;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff;
+      box-shadow: 0 12px 32px rgba(124, 58, 237, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 48px rgba(124, 58, 237, 0.4);
+    }
+    .btn-success {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: #fff;
+      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.3);
+    }
+    .btn-success:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 48px rgba(16, 185, 129, 0.4);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(124, 58, 237, 0.05);
+      transform: translateY(-2px);
+    }
+
+    /* LOADING */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .loading-overlay.show { display: flex; }
+    .loading-content {
+      background: #fff;
+      border-radius: 28px;
+      padding: 46px 56px;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      max-width: 380px;
+    }
+    .loading-spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid rgba(124, 58, 237, 0.1);
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 22px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .loading-sub {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ALERT */
+    .alert {
+      padding: 14px 20px;
+      border-radius: 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .alert-info {
+      background: rgba(124, 58, 237, 0.06);
+      color: var(--accent-dark);
+      border: 1px solid rgba(124, 58, 237, 0.15);
+    }
+    .alert i { font-size: 1.1rem; }
+
+    /* FOOTER */
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+    .footer i { color: var(--accent); margin: 0 4px; }
+
+    @media (max-width: 600px) {
+      .container { padding: 20px 16px 50px; }
+      .card { padding: 26px 20px; }
+      .header h1 { font-size: 1.9rem; }
+      .upload-area { padding: 36px 20px; }
+      .steps { gap: 8px; }
+      .step-item { padding: 8px 14px; font-size: 0.7rem; }
+      .actions { flex-direction: column; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-deco"></div>
+
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo"><i class="fas fa-camera-retro"></i></div>
+      <h1>Twibbon Generator</h1>
+      <p>Buat twibbon JOTA-JOTI 2026 kamu sendiri! Upload foto, atur posisi, dan download hasilnya. <strong>100% gratis.</strong></p>
+    </div>
+
+    <!-- STEPS -->
+    <div class="steps">
+      <div class="step-item active" id="stepIndicator1">
+        <span class="num">1</span> Upload Foto
+      </div>
+      <div class="step-item" id="stepIndicator2">
+        <span class="num">2</span> Atur Posisi
+      </div>
+      <div class="step-item" id="stepIndicator3">
+        <span class="num">3</span> Download
+      </div>
+    </div>
+
+    <!-- CARD -->
+    <div class="card">
+
+      <!-- UPLOAD SECTION -->
+      <div id="uploadSection">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          <span>Pilih foto terbaikmu! Pastikan wajah terlihat jelas dan pencahayaan bagus.</span>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+          <div class="icon"><i class="fas fa-cloud-upload-alt"></i></div>
+          <h3>Upload Foto Kamu</h3>
+          <p>Klik atau drag & drop foto ke sini<br>Format: JPG, PNG, WEBP (Max 10MB)</p>
+          <button class="btn-upload" type="button">
+            <i class="fas fa-image"></i> Pilih Foto
+          </button>
+          <input type="file" id="fileInput" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <!-- PREVIEW SECTION -->
+      <div class="preview-section" id="previewSection">
+
+        <div class="instruction-box">
+          <i class="fas fa-hand-pointer"></i>
+          <div>
+            <strong>Atur posisi fotomu!</strong> Geser foto langsung di canvas, atau pakai slider di bawah.
+            Pastikan wajahmu masuk ke dalam lingkaran.
+          </div>
+        </div>
+
+        <!-- CANVAS -->
+        <div class="canvas-wrapper">
+          <div class="canvas-container">
+            <canvas id="canvas" width="800" height="800"></canvas>
+          </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="controls">
+          <div class="control-group">
+            <div class="label"><i class="fas fa-search-plus"></i> Zoom Foto</div>
+            <input type="range" id="scaleRange" min="30" max="300" value="100">
+            <div class="value-display" id="scaleValue">100%</div>
+          </div>
+          <div class="control-group">
+            <div class="label"><i class="fas fa-arrows-alt"></i> Geser Foto</div>
+            <input type="range" id="posXRange" min="-300" max="300" value="0">
+            <div class="value-display" id="posXValue">X: 0</div>
+            <input type="range" id="posYRange" min="-300" max="300" value="0">
+            <div class="value-display" id="posYValue">Y: 0</div>
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="actions">
+          <button class="btn btn-outline" onclick="resetAll()">
+            <i class="fas fa-redo"></i> Upload Ulang
+          </button>
+          <button class="btn btn-success" onclick="downloadResult()">
+            <i class="fas fa-download"></i> Download Twibbon
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <i class="fas fa-camera"></i> Twibbon Generator JOTA-JOTI 2026
+    </div>
+
+  </div>
+
+  <!-- LOADING OVERLAY -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">Memproses twibbon...</div>
+      <div class="loading-sub" id="loadingSub">Menghapus background hitam otomatis.</div>
+    </div>
+  </div>
+
+  <script>
+    // ========== VARIABLES ==========
+    let userImage = null;       // Foto user
+    let twibbonImage = null;    // Twibbon (setelah diproses, lingkaran hitam jadi transparan)
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let state = {
+      scale: 1,
+      posX: 0,
+      posY: 0
+    };
+
+    // ========== KONFIGURASI ==========
+    const TWIBBON_URL = './twibbon.png';
+    
+    // Toleransi warna hitam (0-255). Semakin tinggi = semakin banyak yang dianggap "hitam"
+    // 30-50 = aman (cuma hitam pekat)
+    // 60-80 = agresif (bisa kena warna gelap lain)
+    const BLACK_THRESHOLD = 50;
+
+    // ========== PROSES TWIBBON: HAPUS HITAM DI TENGAH ==========
+    function processTwibbon(img) {
+      // Buat canvas sementara
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = img.width;
+      tempCanvas.height = img.height;
+      const tempCtx = tempCanvas.getContext('2d');
+
+      // Gambar twibbon
+      tempCtx.drawImage(img, 0, 0);
+
+      // Ambil data pixel
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imageData.data;
+
+      // Loop semua pixel
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+
+        // Skip kalau udah transparan
+        if (a === 0) continue;
+
+        // Cek apakah pixel ini "hitam"
+        // Threshold: semua channel (R, G, B) harus di bawah BLACK_THRESHOLD
+        if (r < BLACK_THRESHOLD && g < BLACK_THRESHOLD && b < BLACK_THRESHOLD) {
+          data[i + 3] = 0; // Set alpha jadi 0 (transparan)
+        }
+      }
+
+      // Apply kembali
+      tempCtx.putImageData(imageData, 0, 0);
+
+      // Return sebagai gambar baru
+      return new Promise((resolve) => {
+        const processedImg = new Image();
+        processedImg.onload = () => resolve(processedImg);
+        processedImg.src = tempCanvas.toDataURL('image/png');
+      });
+    }
+
+    // ========== LOAD TWIBBON SAAT HALAMAN DIBUKA ==========
+    async function initTwibbon() {
+      showLoading('Memuat twibbon...', 'Menghapus background hitam otomatis.');
+      
+      try {
+        const rawImg = await loadImage(TWIBBON_URL);
+        twibbonImage = await processTwibbon(rawImg);
+        console.log('✅ Twibbon berhasil diproses');
+      } catch (e) {
+        console.warn('⚠️ Twibbon gagal load:', TWIBBON_URL, e);
+      }
+      
+      hideLoading();
+    }
+
+    // Jalankan saat halaman load
+    initTwibbon();
+
+    // ========== UPLOAD HANDLER ==========
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    // ========== HANDLE FILE ==========
+    async function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('File harus berupa gambar!');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Ukuran file maksimal 10MB!');
+        return;
+      }
+
+      showLoading('Memuat foto...', 'Menyiapkan preview.');
+
+      try {
+        const dataUrl = await readFileAsDataURL(file);
+        userImage = await loadImage(dataUrl);
+
+        // Reset state
+        state = { scale: 1, posX: 0, posY: 0 };
+        scaleRange.value = 100;
+        posXRange.value = 0;
+        posYRange.value = 0;
+        document.getElementById('scaleValue').textContent = '100%';
+        document.getElementById('posXValue').textContent = 'X: 0';
+        document.getElementById('posYValue').textContent = 'Y: 0';
+
+        // Tampilkan preview
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('previewSection').classList.add('active');
+        updateStepIndicator(2);
+
+        drawCanvas();
+        hideLoading();
+
+      } catch (error) {
+        console.error('Error:', error);
+        hideLoading();
+        alert('Gagal memuat foto: ' + error.message);
+      }
+    }
+
+    // ========== HELPER ==========
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    // ========== DRAW CANVAS ==========
+    function drawCanvas() {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. Gambar FOTO USER dulu (layer bawah)
+      if (userImage) {
+        const baseScale = Math.min(w / userImage.width, h / userImage.height);
+        const finalScale = baseScale * state.scale;
+        const drawW = userImage.width * finalScale;
+        const drawH = userImage.height * finalScale;
+        const drawX = (w - drawW) / 2 + state.posX;
+        const drawY = (h - drawH) / 2 + state.posY;
+
+        ctx.drawImage(userImage, drawX, drawY, drawW, drawH);
+      }
+
+      // 2. Gambar TWIBBON di atasnya
+      // Bagian lingkaran hitam udah diproses jadi transparan,
+      // jadi foto user bakal kelihatan di situ
+      if (twibbonImage) {
+        ctx.drawImage(twibbonImage, 0, 0, w, h);
+      }
+    }
+
+    // ========== SLIDER CONTROLS ==========
+    const scaleRange = document.getElementById('scaleRange');
+    const posXRange = document.getElementById('posXRange');
+    const posYRange = document.getElementById('posYRange');
+
+    scaleRange.addEventListener('input', (e) => {
+      state.scale = parseInt(e.target.value) / 100;
+      document.getElementById('scaleValue').textContent = e.target.value + '%';
+      drawCanvas();
+    });
+
+    posXRange.addEventListener('input', (e) => {
+      state.posX = parseInt(e.target.value);
+      document.getElementById('posXValue').textContent = 'X: ' + e.target.value;
+      drawCanvas();
+    });
+
+    posYRange.addEventListener('input', (e) => {
+      state.posY = parseInt(e.target.value);
+      document.getElementById('posYValue').textContent = 'Y: ' + e.target.value;
+      drawCanvas();
+    });
+
+    // ========== DRAG CANVAS ==========
+    let isDragging = false;
+    let dragStartX, dragStartY, startPosX, startPosY;
+
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      startPosX = state.posX;
+      startPosY = state.posY;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      state.posX = startPosX + dx;
+      state.posY = startPosY + dy;
+
+      posXRange.value = Math.max(-300, Math.min(300, state.posX));
+      posYRange.value = Math.max(-300, Math.min(300, state.posY));
+      document.getElementById('posXValue').textContent = 'X: ' + posXRange.value;
+      document.getElementById('posYValue').textContent = 'Y: ' + posYRange.value;
+
+      drawCanvas();
+    });
+
+    canvas.addEventListener('mouseup', () => isDragging = false);
+    canvas.addEventListener('mouseleave', () => isDragging = false);
+
+    // Touch support
+    canvas.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      isDragging = true;
+      dragStartX = touch.clientX;
+      dragStartY = touch.clientY;
+      startPosX = state.posX;
+      startPosY = state.posY;
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const dx = (touch.clientX - dragStartX) * 1.5;
+      const dy = (touch.clientY - dragStartY) * 1.5;
+      state.posX = startPosX + dx;
+      state.posY = startPosY + dy;
+      posXRange.value = Math.max(-300, Math.min(300, state.posX));
+      posYRange.value = Math.max(-300, Math.min(300, state.posY));
+      drawCanvas();
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', () => isDragging = false);
+
+    // ========== DOWNLOAD ==========
+    function downloadResult() {
+      if (!userImage) {
+        alert('Upload foto dulu!');
+        return;
+      }
+
+      const tempCanvas = document.createElement('canvas');
+      const size = 1080;
+      tempCanvas.width = size;
+      tempCanvas.height = size;
+      const tempCtx = tempCanvas.getContext('2d');
+
+      const factor = size / canvas.width;
+
+      // 1. Gambar foto user
+      if (userImage) {
+        const baseScale = Math.min(size / userImage.width, size / userImage.height);
+        const finalScale = baseScale * state.scale;
+        const drawW = userImage.width * finalScale;
+        const drawH = userImage.height * finalScale;
+        const drawX = (size - drawW) / 2 + state.posX * factor;
+        const drawY = (size - drawH) / 2 + state.posY * factor;
+
+        tempCtx.drawImage(userImage, drawX, drawY, drawW, drawH);
+      }
+
+      // 2. Gambar twibbon
+      if (twibbonImage) {
+        tempCtx.drawImage(twibbonImage, 0, 0, size, size);
+      }
+
+      tempCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'twibbon-jota-joti-2026-' + Date.now() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        updateStepIndicator(3);
+      }, 'image/png', 1);
+    }
+
+    // ========== RESET ==========
+    function resetAll() {
+      userImage = null;
+      state = { scale: 1, posX: 0, posY: 0 };
+
+      scaleRange.value = 100;
+      posXRange.value = 0;
+      posYRange.value = 0;
+      document.getElementById('scaleValue').textContent = '100%';
+      document.getElementById('posXValue').textContent = 'X: 0';
+      document.getElementById('posYValue').textContent = 'Y: 0';
+
+      fileInput.value = '';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      document.getElementById('previewSection').classList.remove('active');
+      document.getElementById('uploadSection').style.display = 'block';
+      updateStepIndicator(1);
+    }
+
+    // ========== STEP INDICATOR ==========
+    function updateStepIndicator(step) {
+      for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById('stepIndicator' + i);
+        el.classList.remove('active', 'done');
+        if (i < step) el.classList.add('done');
+        else if (i === step) el.classList.add('active');
+      }
+    }
+
+    // ========== LOADING ==========
+    function showLoading(text, sub) {
+      document.getElementById('loadingText').textContent = text || 'Memproses...';
+      document.getElementById('loadingSub').textContent = sub || '';
+      document.getElementById('loadingOverlay').classList.add('show');
+    }
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.remove('show');
+    }
+
+    // Expose ke global
+    window.resetAll = resetAll;
+    window.downloadResult = downloadResult;
+  </script>
+
+</body>
+  </html>
