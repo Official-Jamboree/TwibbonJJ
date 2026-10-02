@@ -652,11 +652,11 @@
     const TWIBBON_URL = './twibbon.png';
 
     // Area lingkaran hitam di tengah twibbon (dalam persen)
-    // Hasil pengukuran dari twibbon JOTA-JOTI 2026
+    // Disesuaikan dari pengukuran + feedback: radius digedein dikit
     const CIRCLE = {
       centerX: 50,    // Posisi X tengah lingkaran (%)
       centerY: 49,    // Posisi Y tengah lingkaran (%)
-      radius: 32.5    // Radius lingkaran (%)
+      radius: 34      // Radius lingkaran (%) - digedein dari 32.5
     };
 
     const MIN_SCALE = 0.1;
@@ -677,26 +677,21 @@
       const w = tempCanvas.width;
       const h = tempCanvas.height;
 
-      // Hitung posisi & radius lingkaran dalam pixel
       const cx = (CIRCLE.centerX / 100) * w;
       const cy = (CIRCLE.centerY / 100) * h;
       const radius = (CIRCLE.radius / 100) * w;
 
-      // Loop semua pixel, cek apakah di dalam lingkaran
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
           const i = (y * w + x) * 4;
 
-          // Hitung jarak dari titik tengah lingkaran
           const dx = x - cx;
           const dy = y - cy;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < radius) {
-            // Di dalam lingkaran → transparan total
             data[i + 3] = 0;
           } else if (distance < radius + 2) {
-            // Tepi lingkaran (anti-aliasing) → soft edge biar halus
             const ratio = (distance - radius) / 2;
             data[i + 3] = Math.round(data[i + 3] * ratio);
           }
@@ -810,7 +805,21 @@
 
       ctx.clearRect(0, 0, w, h);
 
+      // 1. Gambar FOTO USER, tapi di-clip jadi bentuk LINGKARAN
+      //    biar gak nimpa ke twibbon
       if (userImage) {
+        ctx.save();
+
+        // Buat clip path lingkaran
+        const cx = (CIRCLE.centerX / 100) * w;
+        const cy = (CIRCLE.centerY / 100) * h;
+        const radius = (CIRCLE.radius / 100) * w;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Gambar foto di dalam clip
         const baseScale = Math.min(w / userImage.width, h / userImage.height);
         const finalScale = baseScale * state.scale;
         const drawW = userImage.width * finalScale;
@@ -819,14 +828,17 @@
         const drawY = (h - drawH) / 2 + state.posY;
 
         ctx.drawImage(userImage, drawX, drawY, drawW, drawH);
+
+        ctx.restore();
       }
 
+      // 2. Twibbon di atasnya
       if (twibbonImage) {
         ctx.drawImage(twibbonImage, 0, 0, w, h);
       }
     }
 
-    // ========== UPDATE UI DARI STATE ==========
+    // ========== UPDATE UI ==========
     function updateUIFromState() {
       scaleRange.value = Math.round(state.scale * 100);
       posXRange.value = Math.round(state.posX);
@@ -892,7 +904,6 @@
     let pinchStartDist = 0;
     let pinchStartScale = 1;
 
-    // Mouse drag
     canvas.addEventListener('mousedown', (e) => {
       isDragging = true;
       dragStartX = e.clientX;
@@ -918,7 +929,6 @@
       canvas.style.cursor = 'grab';
     });
 
-    // Touch: drag + pinch
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         const touch = e.touches[0];
@@ -993,7 +1003,18 @@
 
       const factor = size / canvas.width;
 
+      // 1. Gambar foto user (di-clip lingkaran)
       if (userImage) {
+        tempCtx.save();
+
+        const cx = (CIRCLE.centerX / 100) * size;
+        const cy = (CIRCLE.centerY / 100) * size;
+        const radius = (CIRCLE.radius / 100) * size;
+
+        tempCtx.beginPath();
+        tempCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+        tempCtx.clip();
+
         const baseScale = Math.min(size / userImage.width, size / userImage.height);
         const finalScale = baseScale * state.scale;
         const drawW = userImage.width * finalScale;
@@ -1002,8 +1023,11 @@
         const drawY = (size - drawH) / 2 + state.posY * factor;
 
         tempCtx.drawImage(userImage, drawX, drawY, drawW, drawH);
+
+        tempCtx.restore();
       }
 
+      // 2. Twibbon
       if (twibbonImage) {
         tempCtx.drawImage(twibbonImage, 0, 0, size, size);
       }
@@ -1055,10 +1079,9 @@
       document.getElementById('loadingOverlay').classList.remove('show');
     }
 
-    // Expose ke global
     window.resetAll = resetAll;
     window.downloadResult = downloadResult;
   </script>
 
 </body>
-                                                                                      </html>
+  </html>
