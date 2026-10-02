@@ -274,6 +274,45 @@
     }
     .instruction-box strong { color: var(--text-primary); }
 
+    /* ZOOM FLOATING BUTTONS */
+    .zoom-buttons {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+    .zoom-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1.5px solid var(--border);
+      color: var(--accent);
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      transition: all 0.25s;
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .zoom-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      transform: scale(1.1);
+      box-shadow: 0 10px 24px rgba(124, 58, 237, 0.4);
+    }
+    .zoom-btn:active {
+      transform: scale(0.95);
+    }
+
     /* CONTROLS */
     .controls {
       display: grid;
@@ -473,6 +512,7 @@
       .step-item { padding: 8px 14px; font-size: 0.7rem; }
       .actions { flex-direction: column; }
       .btn { width: 100%; }
+      .zoom-btn { width: 38px; height: 38px; font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -529,8 +569,7 @@
         <div class="instruction-box">
           <i class="fas fa-hand-pointer"></i>
           <div>
-            <strong>Atur posisi fotomu!</strong> Geser foto langsung di canvas, atau pakai slider di bawah.
-            Pastikan wajahmu masuk ke dalam lingkaran.
+            <strong>Atur posisi fotomu!</strong> Geser foto langsung di canvas, <strong>scroll/pinch untuk zoom</strong>, atau pakai tombol +/- dan slider di bawah.
           </div>
         </div>
 
@@ -538,6 +577,16 @@
         <div class="canvas-wrapper">
           <div class="canvas-container">
             <canvas id="canvas" width="800" height="800"></canvas>
+
+            <!-- FLOATING ZOOM BUTTONS -->
+            <div class="zoom-buttons">
+              <button class="zoom-btn" id="zoomInBtn" title="Zoom In" type="button">
+                <i class="fas fa-plus"></i>
+              </button>
+              <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out" type="button">
+                <i class="fas fa-minus"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -545,14 +594,14 @@
         <div class="controls">
           <div class="control-group">
             <div class="label"><i class="fas fa-search-plus"></i> Zoom Foto</div>
-            <input type="range" id="scaleRange" min="30" max="300" value="100">
+            <input type="range" id="scaleRange" min="10" max="400" value="100">
             <div class="value-display" id="scaleValue">100%</div>
           </div>
           <div class="control-group">
             <div class="label"><i class="fas fa-arrows-alt"></i> Geser Foto</div>
-            <input type="range" id="posXRange" min="-300" max="300" value="0">
+            <input type="range" id="posXRange" min="-400" max="400" value="0">
             <div class="value-display" id="posXValue">X: 0</div>
-            <input type="range" id="posYRange" min="-300" max="300" value="0">
+            <input type="range" id="posYRange" min="-400" max="400" value="0">
             <div class="value-display" id="posYValue">Y: 0</div>
           </div>
         </div>
@@ -587,8 +636,8 @@
 
   <script>
     // ========== VARIABLES ==========
-    let userImage = null;       // Foto user
-    let twibbonImage = null;    // Twibbon (setelah diproses, lingkaran hitam jadi transparan)
+    let userImage = null;
+    let twibbonImage = null;
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -601,48 +650,42 @@
 
     // ========== KONFIGURASI ==========
     const TWIBBON_URL = './twibbon.png';
-    
-    // Toleransi warna hitam (0-255). Semakin tinggi = semakin banyak yang dianggap "hitam"
-    // 30-50 = aman (cuma hitam pekat)
-    // 60-80 = agresif (bisa kena warna gelap lain)
     const BLACK_THRESHOLD = 50;
+    const MIN_SCALE = 0.1;
+    const MAX_SCALE = 4;
+    const ZOOM_STEP = 0.1; // Per klik tombol + / -
 
-    // ========== PROSES TWIBBON: HAPUS HITAM DI TENGAH ==========
+    // ========== PROSES TWIBBON ==========
     function processTwibbon(img) {
-      // Buat canvas sementara
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = img.width;
       tempCanvas.height = img.height;
       const tempCtx = tempCanvas.getContext('2d');
-
-      // Gambar twibbon
       tempCtx.drawImage(img, 0, 0);
 
-      // Ambil data pixel
       const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
       const data = imageData.data;
 
-      // Loop semua pixel
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
         const a = data[i + 3];
 
-        // Skip kalau udah transparan
         if (a === 0) continue;
 
-        // Cek apakah pixel ini "hitam"
-        // Threshold: semua channel (R, G, B) harus di bawah BLACK_THRESHOLD
-        if (r < BLACK_THRESHOLD && g < BLACK_THRESHOLD && b < BLACK_THRESHOLD) {
-          data[i + 3] = 0; // Set alpha jadi 0 (transparan)
+        const brightness = (r + g + b) / 3;
+
+        if (brightness < BLACK_THRESHOLD) {
+          data[i + 3] = 0;
+        } else if (brightness < BLACK_THRESHOLD + 40) {
+          const ratio = (brightness - BLACK_THRESHOLD) / 40;
+          data[i + 3] = Math.round(a * ratio);
         }
       }
 
-      // Apply kembali
       tempCtx.putImageData(imageData, 0, 0);
 
-      // Return sebagai gambar baru
       return new Promise((resolve) => {
         const processedImg = new Image();
         processedImg.onload = () => resolve(processedImg);
@@ -650,10 +693,9 @@
       });
     }
 
-    // ========== LOAD TWIBBON SAAT HALAMAN DIBUKA ==========
+    // ========== INIT ==========
     async function initTwibbon() {
       showLoading('Memuat twibbon...', 'Menghapus background hitam otomatis.');
-      
       try {
         const rawImg = await loadImage(TWIBBON_URL);
         twibbonImage = await processTwibbon(rawImg);
@@ -661,11 +703,8 @@
       } catch (e) {
         console.warn('⚠️ Twibbon gagal load:', TWIBBON_URL, e);
       }
-      
       hideLoading();
     }
-
-    // Jalankan saat halaman load
     initTwibbon();
 
     // ========== UPLOAD HANDLER ==========
@@ -673,7 +712,6 @@
     const fileInput = document.getElementById('fileInput');
 
     uploadArea.addEventListener('click', () => fileInput.click());
-
     uploadArea.addEventListener('dragover', (e) => {
       e.preventDefault();
       uploadArea.classList.add('dragover');
@@ -710,23 +748,15 @@
         const dataUrl = await readFileAsDataURL(file);
         userImage = await loadImage(dataUrl);
 
-        // Reset state
         state = { scale: 1, posX: 0, posY: 0 };
-        scaleRange.value = 100;
-        posXRange.value = 0;
-        posYRange.value = 0;
-        document.getElementById('scaleValue').textContent = '100%';
-        document.getElementById('posXValue').textContent = 'X: 0';
-        document.getElementById('posYValue').textContent = 'Y: 0';
+        updateUIFromState();
 
-        // Tampilkan preview
         document.getElementById('uploadSection').style.display = 'none';
         document.getElementById('previewSection').classList.add('active');
         updateStepIndicator(2);
 
         drawCanvas();
         hideLoading();
-
       } catch (error) {
         console.error('Error:', error);
         hideLoading();
@@ -761,7 +791,6 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // 1. Gambar FOTO USER dulu (layer bawah)
       if (userImage) {
         const baseScale = Math.min(w / userImage.width, h / userImage.height);
         const finalScale = baseScale * state.scale;
@@ -773,13 +802,50 @@
         ctx.drawImage(userImage, drawX, drawY, drawW, drawH);
       }
 
-      // 2. Gambar TWIBBON di atasnya
-      // Bagian lingkaran hitam udah diproses jadi transparan,
-      // jadi foto user bakal kelihatan di situ
       if (twibbonImage) {
         ctx.drawImage(twibbonImage, 0, 0, w, h);
       }
     }
+
+    // ========== UPDATE UI DARI STATE ==========
+    function updateUIFromState() {
+      scaleRange.value = Math.round(state.scale * 100);
+      posXRange.value = Math.round(state.posX);
+      posYRange.value = Math.round(state.posY);
+
+      document.getElementById('scaleValue').textContent = Math.round(state.scale * 100) + '%';
+      document.getElementById('posXValue').textContent = 'X: ' + Math.round(state.posX);
+      document.getElementById('posYValue').textContent = 'Y: ' + Math.round(state.posY);
+    }
+
+    // ========== ZOOM FUNCTIONS ==========
+    function zoomIn() {
+      state.scale = Math.min(MAX_SCALE, state.scale + ZOOM_STEP);
+      updateUIFromState();
+      drawCanvas();
+    }
+
+    function zoomOut() {
+      state.scale = Math.max(MIN_SCALE, state.scale - ZOOM_STEP);
+      updateUIFromState();
+      drawCanvas();
+    }
+
+    // Tombol +/- 
+    document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+    document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+
+    // ========== SCROLL ZOOM (MOUSE WHEEL) ==========
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+
+      // Zoom factor berdasarkan arah scroll
+      const delta = e.deltaY > 0 ? -0.08 : 0.08;
+      state.scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale + delta));
+
+      updateUIFromState();
+      drawCanvas();
+    }, { passive: false });
 
     // ========== SLIDER CONTROLS ==========
     const scaleRange = document.getElementById('scaleRange');
@@ -804,16 +870,23 @@
       drawCanvas();
     });
 
-    // ========== DRAG CANVAS ==========
+    // ========== DRAG & PINCH ==========
     let isDragging = false;
     let dragStartX, dragStartY, startPosX, startPosY;
 
+    // Pinch state
+    let isPinching = false;
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+
+    // --- MOUSE DRAG ---
     canvas.addEventListener('mousedown', (e) => {
       isDragging = true;
       dragStartX = e.clientX;
       dragStartY = e.clientY;
       startPosX = state.posX;
       startPosY = state.posY;
+      canvas.style.cursor = 'grabbing';
     });
 
     canvas.addEventListener('mousemove', (e) => {
@@ -823,40 +896,77 @@
       state.posX = startPosX + dx;
       state.posY = startPosY + dy;
 
-      posXRange.value = Math.max(-300, Math.min(300, state.posX));
-      posYRange.value = Math.max(-300, Math.min(300, state.posY));
-      document.getElementById('posXValue').textContent = 'X: ' + posXRange.value;
-      document.getElementById('posYValue').textContent = 'Y: ' + posYRange.value;
-
+      updateUIFromState();
       drawCanvas();
     });
 
-    canvas.addEventListener('mouseup', () => isDragging = false);
-    canvas.addEventListener('mouseleave', () => isDragging = false);
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+      canvas.style.cursor = 'grab';
+    });
 
-    // Touch support
+    // --- TOUCH: DRAG + PINCH ---
     canvas.addEventListener('touchstart', (e) => {
-      const touch = e.touches[0];
-      isDragging = true;
-      dragStartX = touch.clientX;
-      dragStartY = touch.clientY;
-      startPosX = state.posX;
-      startPosY = state.posY;
-    }, { passive: true });
+      if (e.touches.length === 1) {
+        // Single touch → drag
+        const touch = e.touches[0];
+        isDragging = true;
+        isPinching = false;
+        dragStartX = touch.clientX;
+        dragStartY = touch.clientY;
+        startPosX = state.posX;
+        startPosY = state.posY;
+      } else if (e.touches.length === 2) {
+        // Two fingers → pinch
+        isDragging = false;
+        isPinching = true;
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        pinchStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        pinchStartScale = state.scale;
+      }
+    }, { passive: false });
 
     canvas.addEventListener('touchmove', (e) => {
-      if (!isDragging) return;
-      const touch = e.touches[0];
-      const dx = (touch.clientX - dragStartX) * 1.5;
-      const dy = (touch.clientY - dragStartY) * 1.5;
-      state.posX = startPosX + dx;
-      state.posY = startPosY + dy;
-      posXRange.value = Math.max(-300, Math.min(300, state.posX));
-      posYRange.value = Math.max(-300, Math.min(300, state.posY));
-      drawCanvas();
-    }, { passive: true });
+      e.preventDefault();
 
-    canvas.addEventListener('touchend', () => isDragging = false);
+      if (isPinching && e.touches.length === 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+        if (pinchStartDist > 0) {
+          const ratio = dist / pinchStartDist;
+          state.scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * ratio));
+          updateUIFromState();
+          drawCanvas();
+        }
+      } else if (isDragging && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const dx = (touch.clientX - dragStartX) * 1.5;
+        const dy = (touch.clientY - dragStartY) * 1.5;
+        state.posX = startPosX + dx;
+        state.posY = startPosY + dy;
+        updateUIFromState();
+        drawCanvas();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      if (e.touches.length === 0) {
+        isDragging = false;
+        isPinching = false;
+      } else if (e.touches.length === 1) {
+        // Dari pinch balik ke drag
+        isPinching = false;
+        isDragging = true;
+        const touch = e.touches[0];
+        dragStartX = touch.clientX;
+        dragStartY = touch.clientY;
+        startPosX = state.posX;
+        startPosY = state.posY;
+      }
+    });
 
     // ========== DOWNLOAD ==========
     function downloadResult() {
@@ -873,7 +983,6 @@
 
       const factor = size / canvas.width;
 
-      // 1. Gambar foto user
       if (userImage) {
         const baseScale = Math.min(size / userImage.width, size / userImage.height);
         const finalScale = baseScale * state.scale;
@@ -885,7 +994,6 @@
         tempCtx.drawImage(userImage, drawX, drawY, drawW, drawH);
       }
 
-      // 2. Gambar twibbon
       if (twibbonImage) {
         tempCtx.drawImage(twibbonImage, 0, 0, size, size);
       }
@@ -907,13 +1015,7 @@
     function resetAll() {
       userImage = null;
       state = { scale: 1, posX: 0, posY: 0 };
-
-      scaleRange.value = 100;
-      posXRange.value = 0;
-      posYRange.value = 0;
-      document.getElementById('scaleValue').textContent = '100%';
-      document.getElementById('posXValue').textContent = 'X: 0';
-      document.getElementById('posYValue').textContent = 'Y: 0';
+      updateUIFromState();
 
       fileInput.value = '';
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -949,4 +1051,4 @@
   </script>
 
 </body>
-  </html>
+</html>
