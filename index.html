@@ -630,7 +630,7 @@
     <div class="loading-content">
       <div class="loading-spinner"></div>
       <div class="loading-text" id="loadingText">Memproses twibbon...</div>
-      <div class="loading-sub" id="loadingSub">Menghapus background hitam otomatis.</div>
+      <div class="loading-sub" id="loadingSub">Menghapus area lingkaran otomatis.</div>
     </div>
   </div>
 
@@ -650,12 +650,20 @@
 
     // ========== KONFIGURASI ==========
     const TWIBBON_URL = './twibbon.png';
-    const BLACK_THRESHOLD = 50;
+
+    // Area lingkaran hitam di tengah twibbon (dalam persen)
+    // Hasil pengukuran dari twibbon JOTA-JOTI 2026
+    const CIRCLE = {
+      centerX: 50,    // Posisi X tengah lingkaran (%)
+      centerY: 49,    // Posisi Y tengah lingkaran (%)
+      radius: 32.5    // Radius lingkaran (%)
+    };
+
     const MIN_SCALE = 0.1;
     const MAX_SCALE = 4;
-    const ZOOM_STEP = 0.1; // Per klik tombol + / -
+    const ZOOM_STEP = 0.1;
 
-    // ========== PROSES TWIBBON ==========
+    // ========== PROSES TWIBBON: HAPUS AREA LINGKARAN ==========
     function processTwibbon(img) {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = img.width;
@@ -666,21 +674,32 @@
       const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
       const data = imageData.data;
 
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const a = data[i + 3];
+      const w = tempCanvas.width;
+      const h = tempCanvas.height;
 
-        if (a === 0) continue;
+      // Hitung posisi & radius lingkaran dalam pixel
+      const cx = (CIRCLE.centerX / 100) * w;
+      const cy = (CIRCLE.centerY / 100) * h;
+      const radius = (CIRCLE.radius / 100) * w;
 
-        const brightness = (r + g + b) / 3;
+      // Loop semua pixel, cek apakah di dalam lingkaran
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4;
 
-        if (brightness < BLACK_THRESHOLD) {
-          data[i + 3] = 0;
-        } else if (brightness < BLACK_THRESHOLD + 40) {
-          const ratio = (brightness - BLACK_THRESHOLD) / 40;
-          data[i + 3] = Math.round(a * ratio);
+          // Hitung jarak dari titik tengah lingkaran
+          const dx = x - cx;
+          const dy = y - cy;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < radius) {
+            // Di dalam lingkaran → transparan total
+            data[i + 3] = 0;
+          } else if (distance < radius + 2) {
+            // Tepi lingkaran (anti-aliasing) → soft edge biar halus
+            const ratio = (distance - radius) / 2;
+            data[i + 3] = Math.round(data[i + 3] * ratio);
+          }
         }
       }
 
@@ -695,7 +714,7 @@
 
     // ========== INIT ==========
     async function initTwibbon() {
-      showLoading('Memuat twibbon...', 'Menghapus background hitam otomatis.');
+      showLoading('Memuat twibbon...', 'Menghapus area lingkaran otomatis.');
       try {
         const rawImg = await loadImage(TWIBBON_URL);
         twibbonImage = await processTwibbon(rawImg);
@@ -831,18 +850,14 @@
       drawCanvas();
     }
 
-    // Tombol +/- 
     document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
     document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
 
-    // ========== SCROLL ZOOM (MOUSE WHEEL) ==========
+    // ========== SCROLL ZOOM ==========
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
-
-      // Zoom factor berdasarkan arah scroll
       const delta = e.deltaY > 0 ? -0.08 : 0.08;
       state.scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale + delta));
-
       updateUIFromState();
       drawCanvas();
     }, { passive: false });
@@ -873,13 +888,11 @@
     // ========== DRAG & PINCH ==========
     let isDragging = false;
     let dragStartX, dragStartY, startPosX, startPosY;
-
-    // Pinch state
     let isPinching = false;
     let pinchStartDist = 0;
     let pinchStartScale = 1;
 
-    // --- MOUSE DRAG ---
+    // Mouse drag
     canvas.addEventListener('mousedown', (e) => {
       isDragging = true;
       dragStartX = e.clientX;
@@ -905,10 +918,9 @@
       canvas.style.cursor = 'grab';
     });
 
-    // --- TOUCH: DRAG + PINCH ---
+    // Touch: drag + pinch
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
-        // Single touch → drag
         const touch = e.touches[0];
         isDragging = true;
         isPinching = false;
@@ -917,7 +929,6 @@
         startPosX = state.posX;
         startPosY = state.posY;
       } else if (e.touches.length === 2) {
-        // Two fingers → pinch
         isDragging = false;
         isPinching = true;
         const t1 = e.touches[0];
@@ -957,7 +968,6 @@
         isDragging = false;
         isPinching = false;
       } else if (e.touches.length === 1) {
-        // Dari pinch balik ke drag
         isPinching = false;
         isDragging = true;
         const touch = e.touches[0];
@@ -1051,4 +1061,4 @@
   </script>
 
 </body>
-</html>
+                                                                                      </html>
